@@ -1,5 +1,10 @@
-function results = runInspectionSuite(imds, net)
+function results = runInspectionSuite(imds, net, distortFcn)
 % RUNINSPECTIONSUITE: Evaluates the AI results.
+%   DistortFcn (optional): function applied to each image
+
+if nargin < 3
+    distortFcn = [];
+end
 
 n = numel(imds.Files);
 
@@ -10,14 +15,19 @@ trueLabel      = strings(n, 1);
 
 % Create empty arrays
 aiPred        = strings(n,1);
-aiLabel   = strings(n,1);
+aiLabel       = strings(n,1);
 baselinePred  = strings(n,1);
 agreementTier = strings(n,1);
-AIDecisionIsCorrect     = false(n,1);
+AIDecisionIsCorrect = false(n,1);
 
 for i = 1:n
     I = readimage(imds, i);
-    
+
+    % Apply distortion (Task 5)
+    if ~isempty(distortFcn)
+        I = distortFcn(I);
+    end
+
     % True PASS/FAIL label
     if trueDefectType(i) == "good"
         trueLabel(i) = "PASS";
@@ -27,7 +37,7 @@ for i = 1:n
 
     % Run AI detection
     [finalLabel, ~, ~, ~, baselineDecision] = inspectPart(I, net);
-    
+
     % AI defect type
     aiLabel(i) = string(finalLabel);
 
@@ -49,7 +59,7 @@ for i = 1:n
         agreementTier(i) = "Unsure";
     end
 
-    % Compare true vale with AI predicted value
+    % Compare true value with AI predicted value
     AIDecisionIsCorrect(i) = (aiPassFail == trueLabel(i));
 end
 
