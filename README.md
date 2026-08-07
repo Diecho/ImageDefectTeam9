@@ -11,7 +11,7 @@ Build a virtual inspection station for a single part type (metal plates) that:
 4. Evaluates accuracy on a held-out test set (confusion matrix, yield/defect rates).
 5. Tests robustness under simulated lighting, blur, and noise variations.
 
-Full write-up with plots and confusion matrices is in [ImageBasedDefectSystem_StudentProjectTemplate.pdf](ImageBasedDefectSystem_StudentProjectTemplate.pdf).
+Full write-up with plots and confusion matrices is in [MetalPlatesImageBasedDefectSystem.pdf](MetalPlatesImageBasedDefectSystem.pdf).
 
 ## Requirements
 
