@@ -1,6 +1,6 @@
 function [finalLabel, confidenceScore, evidenceOverlay, evidenceMetrics, baselineDecision] = inspectPart(I, net)
 
-% Task 2
+% Task 2 (Image Processing Pipeline)
 [rgb, gray] = standardizeImage(I, [512 512]);
 partMask = segmentPart(rgb);
 [rgbCorrected, grayCorrected] = correctLighting(rgb, gray);
@@ -8,11 +8,11 @@ partMask = segmentPart(rgb);
 evidenceMetrics = extractMetrics(evidenceMask);
 baselineDecision = decideRules(evidenceMetrics);
 
-% Task 3
+% Task 3 (AI)
 roiForNet = imresize(rgbCorrected, [224 224]);
 [finalLabel, confidenceScore] = classify(net, roiForNet);
 
-% Overlay image
+% Image Overlay 
 evidenceOverlay = rgbCorrected;
 redChannel = evidenceOverlay(:,:,1);
 redChannel(evidenceMask) = 255;
