@@ -12,6 +12,7 @@ Build a virtual inspection station for a single part type (metal plates) that:
 5. Tests robustness under simulated lighting, blur, and noise variations.
 
 The full technical write-up, including all plots, confusion matrices, and analytics, is available in the project report:
+
 [![View PDF](https://img.shields.io/badge/View_Report-PDF-red.svg)](MetalPlatesImageBasedDefectSystem.pdf)
 
 ## Requirements
@@ -55,6 +56,7 @@ Follow these exact steps to run the Live Script and reproduce our results:
 * If you do not have the ResNet-18 Add-On installed, running the script for the first time will automatically prompt you to download it. 
 
 **3. Choose Your Training Path (Task 3)**
+
 When you reach the **Network Training** section in Task 3, you have two options:
 * **Option A: Use our Pre-Trained Model (Recommended)** Leave the code as-is to load `MyBestNet.mat`. This instantly loads our best performing AI model so you can immediately run Tasks 4 and 5 to see the final analytics.
 * **Option B: Train from Scratch**
