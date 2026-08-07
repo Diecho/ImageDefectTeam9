@@ -1,98 +1,97 @@
 # ImageDefectTeam9 — Image-Based Defect Detection for Metal Parts
 
-A MATLAB inspection pipeline that classifies metal-plate images as **PASS** or **FAIL** using a hybrid workflow: classical image processing generates traceable defect evidence, and a transfer-learned ResNet-18 makes the final decision.
+A MATLAB inspection pipeline that classifies metal-plate images as PASS or FAIL using a hybrid workflow: image processing generates a red overlay, and a transfer-learned ResNet-18 makes the final decision by categorizing the part into one of four specific defect types. 
 
 ## Objective
 
 Build a virtual inspection station for a single part type (metal plates) that:
 1. Standardizes and preprocesses each image (resize, illumination correction, denoising).
-2. Extracts an **evidence overlay** and interpretable metrics (rust regions, scratches, area ratio).
+2. Extracts an evidence overlay and interpretable metrics (rust regions, scratches, area ratio).
 3. Classifies the part with a fine-tuned CNN (`resnet18`) into `good`, `scratches`, `major_rust`, or `total_rust`, then collapses to PASS/FAIL.
 4. Evaluates accuracy on a held-out test set (confusion matrix, yield/defect rates).
 5. Tests robustness under simulated lighting, blur, and noise variations.
 
-Full write-up with plots and confusion matrices is in [MetalPlatesImageBasedDefectSystem.pdf](MetalPlatesImageBasedDefectSystem.pdf).
+The full technical write-up, including all plots, confusion matrices, and analytics, is available in the project report:
+[![View PDF](https://img.shields.io/badge/View_Report-PDF-red.svg)](MetalPlatesImageBasedDefectSystem.pdf)
 
 ## Requirements
 
-- **MATLAB R2023a or newer** (tested on R2024a)
+- **MATLAB R2023a or newer** (tested on R2026a)
 - Toolboxes:
   - Image Processing Toolbox
   - Deep Learning Toolbox
-  - Statistics and Machine Learning Toolbox
   - Deep Learning Toolbox Model for ResNet-18 Network (Add-On)
+> **Heads up:** The ResNet-18 model isn't included in base MATLAB. If you don't have it installed yet, MATLAB should automatically prompt you to download it when you run the script. You can also just search for "ResNet-18" in the Add-On Explorer and grab it there.
 
 ## Repository Layout
 
 ```
 ImageDefectTeam9/
-├── ImageBasedDefectSystem_StudentProjectTemplate.mlx  # Main Live Script
-├── ImageBasedDefectSystem_StudentProjectTemplate.pdf  # Exported report of the Live Script
-├── MyBestNet.mat                                      # Best trained ResNet-18 (used by default)
-├── trainedNet.mat                                     # Additional trained network snapshot
-├── metal_plate/                                       # MPDD dataset (train/, test/, labels.csv)
-└── *.m                                                # Pipeline functions (see below)
+├── metal_plate/                              # MPDD image dataset and generated CSV
+│   ├── ground_truth/                         # Ground-truth defect masks (not used)
+│   ├── test/                                 # Testing images (good, major_rust, scratches, total_rust)
+│   └── train/                                # Training images (good only)
+├── models/                                   # Trained Machine Learning models
+│   ├── MyBestNet.mat                         # Best trained ResNet-18 model (used by default)
+│   └── trainedNet.mat                        # Default save file for custom training runs
+├── functions/                                # All custom image processing & AI functions
+│   └── *.m                                   # Pipeline functions (see detailed descriptions below)
+├── MetalPlatesImageBasedDefectSystem.mlx     # Main Live Script containing all tasks and report
+├── MetalPlatesImageBasedDefectSystem.pdf     # Exported PDF report
+├── README.md                                 # Project documentation
+└── .gitignore                                # Git ignore file (*.asv)
 ```
 
-## How to Run
+## How to Run and Reproduce Results
 
-1. Open MATLAB and set the working directory to the repo root.
-2. Open [ImageBasedDefectSystem_StudentProjectTemplate.mlx](ImageBasedDefectSystem_StudentProjectTemplate.mlx). This Live Script drives the full workflow (dataset loading, training, evaluation, and robustness tests). Run it section-by-section.
-3. To run inference on a single image with the pre-trained network:
-   ```matlab
-   load('MyBestNet.mat');   % loads variable `net`
-   I = imread('metal_plate/test/scratches/000.png');
-   [label, conf, overlay, metrics, baseline] = inspectPart(I, net);
-   imshow(overlay); title(sprintf('%s (%.2f) — baseline: %s', label, max(conf), baseline));
-   ```
-4. To run the full batch evaluation on the test set:
-   ```matlab
-   load('MyBestNet.mat');
-   imds = imageDatastore('metal_plate/test', 'IncludeSubfolders', true, 'LabelSource', 'foldernames');
-   results = runInspectionSuite(imds, net);
-   confusionchart(results.trueLabel, results.aiPred);
-   ```
-5. Robustness sweeps: pass a distortion handle as the third argument, e.g.
-   ```matlab
-   results = runInspectionSuite(imds, net, @(I) applyBlur(I, 4));
-   ```
+Follow these exact steps to run the Live Script and reproduce our results:
 
-## Reproducing the Results
+**1. Set Up the Dataset (Task 1)**
+* Open `MetalPlatesImageBasedDefectSystem.mlx` in MATLAB.
+* Locate the `root` variable in **Task 1** and change the file path to match the location of the repository on your local computer.
+* **CRITICAL:** Uncomment the code block under *Generating the CSV* and run that section once. This will scan your local folders and generate the required `labels.csv` file. Once the CSV is created, you can comment that block out again.
 
-- The train/test split used in the report is the one shipped in `metal_plate/train` and `metal_plate/test`.
-- Use `MyBestNet.mat` to reproduce the reported accuracy without retraining.
-- To retrain: run the training section of the Live Script (transfer learning on `resnet18`, image size 224×224). Set a fixed `rng(0)` before `trainNetwork` if you want deterministic weights.
-- To reproduce robustness numbers, call `runInspectionSuite` with each of the distortion functions and the sweep values noted in the function help comments (`applyBlur` sigma ∈ [1 2 4 8], `applyContrast` gamma ∈ [0.4 0.7 1.5 2.5], `applyNoise` with the three noise types).
+**2. Install Dependencies**
+* If you do not have the ResNet-18 Add-On installed, running the script for the first time will automatically prompt you to download it. 
+
+**3. Choose Your Training Path (Task 3)**
+When you reach the **Network Training** section in Task 3, you have two options:
+* **Option A: Use our Pre-Trained Model (Recommended)** Leave the code as-is to load `MyBestNet.mat`. This instantly loads our best performing AI model so you can immediately run Tasks 4 and 5 to see the final analytics.
+* **Option B: Train from Scratch**
+  If you want to verify our training process, uncomment the `trainNetwork()` line. **Note:** Training takes about 5 minutes on a standard CPU. MATLAB can utilize an NVIDIA GPU to make this significantly faster, though our team solely utilized CPU training for this project. If you train a new network, be sure to uncomment the `save()` function if you want to keep your results!
+
+**4. Run Evaluations (Tasks 4 & 5)**
+* Once your model is loaded (or trained), simply run the remaining sections of the script to generate the Pass/Fail confusion matrices, the factory yield analytics, and the simulated stress-tests.
 
 ## File Descriptions
 
-### Pipeline (called per image)
-- **`standardizeImage.m`** — Resizes the input and returns both RGB and grayscale copies at a common size (default 512×512).
-- **`correctLighting.m`** — Flat-field illumination correction (`imflatfield`), CLAHE contrast normalization, and median denoising.
-- **`segmentPart.m`** — Adaptive threshold + hole-fill to isolate the metal part silhouette from the background.
-- **`defectEvidence.m`** — Produces the defect evidence mask: HSV hue/saturation gate for rust + Canny edges gated by dark regions for scratches, then morphological cleanup.
-- **`extractMetrics.m`** — Computes interpretable metrics from the evidence mask: number of components, largest component area, and area ratio.
-- **`decideRules.m`** — Classical rule-based baseline PASS/FAIL decision using thresholds on `areaRatio` and `maxArea`.
-- **`inspectPart.m`** — Top-level per-image function that runs the full pipeline and returns `finalLabel`, `confidenceScore`, `evidenceOverlay`, `evidenceMetrics`, and the classical `baselineDecision`.
-
-### Batch evaluation
-- **`runInspectionSuite.m`** — Iterates over an `imageDatastore`, optionally applies a distortion function, calls `inspectPart` on each image, and returns a table with true labels, AI predictions, baseline predictions, agreement tier, and per-image correctness.
-
-### Robustness perturbations (Task 5)
+### Core Pipeline (called per image)
+- **`standardizeImage.m`** — Resizes and formats input images to a uniform size (512×512).
+- **`correctLighting.m`** — Corrects uneven illumination, contrast, and noise.
+- **`segmentPart.m`** — Separates the metal plate from the background.
+- **`defectEvidence.m`** — Generates binary defect masks for rust based on color and scratches based on edges.
+- **`extractMetrics.m`** — Calculates defect metrics: number of components, largest component area, and area ratio.
+- **`decideRules.m`** — Applies simple thresholds to decide PASS or FAIL.
+- **`classify.m`** — Passes the image region to our trained network model to get the defect label and confidence score.
+- **`inspectPart.m`** — Main single-image inspection, combines image processing and AI predictions.
+- **`runInspectionSuite.m`** — Runs a full dataset of testing images and collects accuracy metrics.
 - **`applyBlur.m`** — Gaussian blur (defocus simulation), `sigma` parameter.
 - **`applyContrast.m`** — Gamma correction to simulate over/under-exposed lighting.
 - **`applyNoise.m`** — Adds `gaussian`, `salt & pepper`, or `speckle` sensor noise.
 
 ### Models & data
-- **`MyBestNet.mat`** — Fine-tuned ResNet-18 used for the reported results (loads variable `net`).
-- **`trainedNet.mat`** — Earlier training snapshot kept for comparison.
+- **`MyBestNet.mat`** — Our best pre-trained ResNet-18 model (used by default).
+- **`trainedNet.mat`** — A pre-trained network kept for testing or for people who want to explore other training options.
 - **`metal_plate/`** — MPDD subset with `train/`, `test/`, `ground_truth/`, and `labels.csv`.
 
 ## Dataset & Licensing
 
+**Code License**
+The software and code in this repository are licensed under the MIT License (see the `LICENSE` file for details).
+
+**Dataset License**
 This project uses the **Metal Parts Defect Detection Dataset (MPDD)** by Jezek et al. — [stepanje/MPDD on GitHub](https://github.com/stepanje/MPDD).
 
-### License
 Images are used under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 
 ### Citation
