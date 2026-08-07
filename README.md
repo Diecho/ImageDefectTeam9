@@ -67,7 +67,7 @@ When you reach the **Network Training** section in Task 3, you have two options:
 
 ## File Descriptions
 
-### Core Pipeline (called per image)
+### Core Pipeline (/functions)
 - **`standardizeImage.m`** — Resizes and formats input images to a uniform size (512×512).
 - **`correctLighting.m`** — Corrects uneven illumination, contrast, and noise.
 - **`segmentPart.m`** — Separates the metal plate from the background.
@@ -81,9 +81,11 @@ When you reach the **Network Training** section in Task 3, you have two options:
 - **`applyContrast.m`** — Gamma correction to simulate over/under-exposed lighting.
 - **`applyNoise.m`** — Adds `gaussian`, `salt & pepper`, or `speckle` sensor noise.
 
-### Models & data
+### Models (/models)
 - **`MyBestNet.mat`** — Our best pre-trained ResNet-18 model (used by default).
 - **`trainedNet.mat`** — A pre-trained network kept for testing or for people who want to explore other training options.
+  
+### Data
 - **`metal_plate/`** — MPDD subset with `train/`, `test/`, `ground_truth/`, and `labels.csv`.
 
 ## Dataset & Licensing
